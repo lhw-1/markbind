@@ -74,7 +74,7 @@ test('Site baseurls are correct for sub nested subsites', async () => {
   const baseUrlMapExpected = new Set(['', 'sub', 'sub/sub', 'otherSub/sub'].map(url => path.resolve(url)));
 
   const site = new Site('./', '_site');
-  await site.readSiteConfig();
+  await site.siteConfigManager.readSiteConfig();
   await site.collectBaseUrl();
   expect(site.baseUrlMap).toEqual(baseUrlMapExpected);
 });
@@ -104,7 +104,7 @@ test('Site read site config for default', async () => {
   const expectedSiteConfigDefaults = { enableSearch: true };
   const expectedSiteConfig = { ...JSON.parse(SITE_JSON_DEFAULT), ...expectedSiteConfigDefaults };
   const site = new Site('./', '_site');
-  const siteConfig = await site.readSiteConfig();
+  const siteConfig = await site.siteConfigManager.readSiteConfig();
 
   expect(siteConfig.baseUrl).toEqual(expectedSiteConfig.baseUrl);
   expect(siteConfig.titlePrefix).toEqual(expectedSiteConfig.titlePrefix);
@@ -141,7 +141,7 @@ test('Site read site config for custom site config', async () => {
   fs.vol.fromJSON(json, '');
 
   const site = new Site('./', '_site');
-  const siteConfig = await site.readSiteConfig();
+  const siteConfig = await site.siteConfigManager.readSiteConfig();
 
   expect(siteConfig.baseUrl).toEqual(customSiteJson.baseUrl);
   expect(siteConfig.pages).toEqual(customSiteJson.pages);
@@ -163,7 +163,7 @@ test('Site resolves variables referencing other variables', async () => {
   fs.vol.fromJSON(json, '');
 
   const site = new Site('./', '_site');
-  await site.readSiteConfig();
+  await site.siteConfigManager.readSiteConfig();
   await site.collectBaseUrl();
   await site.collectUserDefinedVariablesMap();
 
@@ -194,7 +194,7 @@ test('Site read correct user defined variables', async () => {
   fs.vol.fromJSON(json, '');
 
   const site = new Site('./', '_site');
-  await site.readSiteConfig();
+  await site.siteConfigManager.readSiteConfig();
   await site.collectBaseUrl();
   await site.collectUserDefinedVariablesMap();
 

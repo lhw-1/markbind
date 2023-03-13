@@ -53,6 +53,7 @@ export class PageConfig {
   resultPath: string;
   rootPath: string;
   searchable: boolean;
+  siteConfigManager: any; // Change to SiteConfigManager
   siteLinkManager: SiteLinkManager;
   siteOutputPath: string;
   /**
@@ -81,6 +82,7 @@ export class PageConfig {
     resultPath: string;
     rootPath: string;
     searchable: boolean;
+    siteConfigManager: any; // Change to SiteConfigManager
     siteLinkManager: SiteLinkManager;
     siteOutputPath: string;
     sourcePath: string;
@@ -102,6 +104,7 @@ export class PageConfig {
     this.resultPath = args.resultPath;
     this.rootPath = args.rootPath;
     this.searchable = args.searchable;
+    this.siteConfigManager = args.siteConfigManager;
     this.siteLinkManager = args.siteLinkManager;
     this.siteOutputPath = args.siteOutputPath;
     this.sourcePath = args.sourcePath;

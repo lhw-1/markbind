@@ -202,7 +202,7 @@ program
     };
 
     site
-      .readSiteConfig()
+      .siteConfigManager.readSiteConfig()
       .then(async (config) => {
         serverConfig.mount.push([config.baseUrl || '/', outputFolder]);
 

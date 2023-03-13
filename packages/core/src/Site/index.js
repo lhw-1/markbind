@@ -8,13 +8,14 @@ const walkSync = require('walk-sync');
 const simpleGit = require('simple-git');
 const ProgressBar = require('../lib/progress');
 
-const SiteConfig = require('./SiteConfig');
+// const SiteConfig = require('./SiteConfig');
 const { Page } = require('../Page');
 const { PageConfig } = require('../Page/PageConfig');
 const VariableProcessor = require('../variables/VariableProcessor');
 const VariableRenderer = require('../variables/VariableRenderer');
 const { ExternalManager } = require('../External/ExternalManager');
 const { LayoutManager, LAYOUT_DEFAULT_NAME, LAYOUT_FOLDER_PATH } = require('../Layout');
+const { SiteConfigManager } = require('./SiteConfigManager');
 const { SiteLinkManager } = require('../html/SiteLinkManager');
 const { PluginManager } = require('../plugins/PluginManager');
 const { Template } = require('./template');
@@ -143,6 +144,9 @@ class Site {
     // Site wide link checker
     this.siteLinkManager = undefined;
 
+    // Site wide config manager
+    this.siteConfigManager = new SiteConfigManager(this.rootPath, this.siteConfigPath);
+
     // Background build properties
     this.backgroundBuildMode = onePagePath && backgroundBuildMode;
     this.stopGenerationTimeThreshold = new Date();
@@ -236,25 +240,6 @@ class Site {
     }
   }
 
-  /**
-   * Read and store the site config from site.json, overwrite the default base URL
-   * if it's specified by the user.
-   * @param baseUrl user defined base URL (if exists)
-   * @returns {Promise}
-   */
-  async readSiteConfig(baseUrl) {
-    try {
-      const siteConfigPath = path.join(this.rootPath, this.siteConfigPath);
-      const siteConfigJson = fs.readJsonSync(siteConfigPath);
-      this.siteConfig = new SiteConfig(siteConfigJson, baseUrl);
-
-      return this.siteConfig;
-    } catch (err) {
-      throw (new Error(`Failed to read the site config file '${this.siteConfigPath}' at`
-        + `${this.rootPath}:\n${err.message}\nPlease ensure the file exist or is valid`));
-    }
-  }
-
   listAssets(fileIgnore) {
     const files = walkSync(this.rootPath, { directories: false });
     return fileIgnore.filter(files);
@@ -318,6 +303,7 @@ class Site {
       rootPath: this.rootPath,
       searchable: this.siteConfig.enableSearch && config.searchable,
       siteLinkManager: this.siteLinkManager,
+      siteConfigManager: this.siteConfigManager,
       siteOutputPath: this.outputPath,
       sourcePath,
       src: config.pageSrc,
@@ -334,12 +320,12 @@ class Site {
    * Converts an existing GitHub wiki or docs folder to a MarkBind website.
    */
   async convert() {
-    await this.readSiteConfig();
+    this.siteConfig = await this.siteConfigManager.readSiteConfig();
     this.collectAddressablePages();
     await this.addIndexPage();
     await this.addAboutPage();
     this.addDefaultLayoutFiles();
-    await this.addDefaultLayoutToSiteConfig();
+    await this.siteConfigManager.addDefaultLayoutToSiteConfig();
     Site.printBaseUrlMessage();
   }
 
@@ -424,24 +410,6 @@ class Site {
       });
 
     return siteNavContent.trimEnd();
-  }
-
-  /**
-   * Applies the default layout to all addressable pages by modifying the site config file.
-   */
-  async addDefaultLayoutToSiteConfig() {
-    const configPath = path.join(this.rootPath, SITE_CONFIG_NAME);
-    const config = await fs.readJson(configPath);
-    await Site.writeToSiteConfig(config, configPath);
-  }
-
-  /**
-   * Helper function for addDefaultLayoutToSiteConfig().
-   */
-  static async writeToSiteConfig(config, configPath) {
-    const layoutObj = { glob: '**/*.md', layout: LAYOUT_DEFAULT_NAME };
-    config.pages.push(layoutObj);
-    await fs.outputJson(configPath, config);
   }
 
   static printBaseUrlMessage() {
@@ -625,7 +593,7 @@ class Site {
       startTime.toLocaleTimeString()}`);
 
     try {
-      await this.readSiteConfig(baseUrl);
+      this.siteConfig = await this.siteConfigManager.readSiteConfig(baseUrl);
       this.collectAddressablePages();
       await this.collectBaseUrl();
       this.collectUserDefinedVariablesMap();
@@ -891,7 +859,7 @@ class Site {
     const oldSiteConfig = this.siteConfig;
     const oldAddressablePages = this.addressablePages.slice();
     const oldPagesSrc = oldAddressablePages.map(page => page.src);
-    await this.readSiteConfig();
+    this.siteConfig = await this.siteConfigManager.readSiteConfig();
     await this.handleIgnoreReload(oldSiteConfig.ignore);
     await this.handlePageReload(oldAddressablePages, oldPagesSrc, oldSiteConfig);
     await this.handleStyleReload(oldSiteConfig.style);
@@ -1462,7 +1430,7 @@ class Site {
    */
   async generateDepUrl(ciTokenVar, defaultDeployConfig) {
     const publish = Promise.promisify(ghpages.publish);
-    await this.readSiteConfig();
+    this.siteConfig = await this.siteConfigManager.readSiteConfig();
     const depOptions = await this.getDepOptions(ciTokenVar, defaultDeployConfig, publish);
     return Site.getDepUrl(depOptions, defaultDeployConfig);
   }
