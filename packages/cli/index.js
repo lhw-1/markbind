@@ -10,7 +10,7 @@ const Promise = require('bluebird');
 const _ = {};
 _.isBoolean = require('lodash/isBoolean');
 
-const { Site } = require('@markbind/core');
+const { Site, Template } = require('@markbind/core');
 const { pageVueServerRenderer } = require('@markbind/core/src/Page/PageVueServerRenderer');
 
 const fsUtil = require('@markbind/core/src/utils/fsUtil');
@@ -51,6 +51,21 @@ program
 program
   .name('markbind')
   .version(CLI_VERSION);
+
+// /**
+//    * Static method for initializing a markbind site.
+//    * Generate the site.json and an index.md file.
+//    *
+//    * @param rootPath
+//    * @param templatePath
+//    */
+// static async initSite(rootPath, templatePath) {
+//   try {
+//     return await new Template(rootPath, templatePath).initTemplate();
+//   } catch (err) {
+//     return new Error(`Failed to initialize site with given template with error: ${err.message}`);
+//   }
+// }
 
 program
   .command('init [root]')
